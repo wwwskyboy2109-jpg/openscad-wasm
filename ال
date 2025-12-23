@@ -1,0 +1,64 @@
+// Column C-1: 40x40, 8Φ20, Stirrups Φ10 @10/20
+$fn = 64; // smoothness
+
+// Parameters (edit if needed)
+col = 400;             // column side
+h_top = 4900;          // height above 0
+h_btm = 400;           // below 0
+h = h_top + h_btm;     // total height
+
+cover_to_stirrup = 40; // clear cover to stirrup
+stirrup_d = 10;
+bar_d = 20;
+
+end_zone = 500;        // 0.5m at top & bottom with 10 cm spacing
+s_top = 100;
+s_mid = 200;
+s_bot = 100;
+
+// Derived
+bar_offset = cover_to_stirrup + stirrup_d + bar_d/2; // from face to bar center
+tie_outer = col - 2*cover_to_stirrup;
+tie_inner = tie_outer - 2*stirrup_d;
+
+// Geometry
+module column_concrete(){
+  translate([-col/2, -col/2, 0]) cube([col, col, h], center=false);
+}
+
+module long_bars(){
+  positions = [
+    [-col/2 + bar_offset, -col/2 + bar_offset],
+    [ col/2 - bar_offset, -col/2 + bar_offset],
+    [-col/2 + bar_offset,  col/2 - bar_offset],
+    [ col/2 - bar_offset,  col/2 - bar_offset],
+    [ 0, -col/2 + bar_offset],
+    [ 0,  col/2 - bar_offset],
+    [-col/2 + bar_offset, 0],
+    [ col/2 - bar_offset, 0]
+  ];
+  for (p = positions)
+    translate([p[0], p[1], 0]) cylinder(h=h, d=bar_d, center=false);
+}
+
+module stirrup_at(z){
+  translate([0,0,z]) linear_extrude(height=stirrup_d)
+    difference(){
+      square([tie_outer, tie_outer], center=true);
+      square([tie_inner, tie_inner], center=true);
+    }
+}
+
+module stirrups(){
+  // bottom zone @10
+  for (z=[0 : s_bot : end_zone]) stirrup_at(z);
+  // middle zone @20
+  for (z=[end_zone + s_mid : s_mid : h - end_zone]) stirrup_at(z);
+  // top zone @10
+  for (z=[h - end_zone : s_top : h]) stirrup_at(z);
+}
+
+// Render
+color("lightgray") column_concrete();
+color([0.9,0.1,0.1]) long_bars();
+color([0.2,0.2,0.2]) stirrups();
